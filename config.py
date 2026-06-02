@@ -12,6 +12,7 @@ class Config(BaseSettings):
         env_file=Path(__file__).resolve().parent.parent / ".env", env_file_encoding="utf-8"
     )
     database_url: SecretStr
+    mcp_path: str
 
 _config: Optional[Config] = None
 
