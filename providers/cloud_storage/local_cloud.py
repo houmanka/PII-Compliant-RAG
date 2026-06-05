@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Iterator
 
-from cloud_storage.contract import CloudStorage
-from cloud_storage.registry import register, CloudStorageKind
+from providers.cloud_storage.contract import CloudStorage
+from providers.cloud_storage.registry import register, CloudStorageKind
 from config import Config
 
 
@@ -11,7 +11,7 @@ class LocalCloudStorage(CloudStorage):
         # Config is accepted for factory consistency, even if LocalCloud doesn't need it yet.
         self._config = config
 
-    _PROJECT_ROOT = Path(__file__).parents[1]
+    _PROJECT_ROOT = Path(__file__).parents[2]
 
     def iter_text_lines(self, path: str) -> Iterator[str]:
         file_path = self._PROJECT_ROOT / path

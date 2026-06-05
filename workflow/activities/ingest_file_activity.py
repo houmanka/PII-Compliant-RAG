@@ -10,8 +10,8 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from temporalio import activity
 
-from cloud_storage.contract import CloudStorage
-from storage.contract import DataStore, Complaint, Classification
+from providers.cloud_storage.contract import CloudStorage
+from providers.storage.contract import DataStore, Complaint, Classification
 
 @dataclass
 class FileDetails:

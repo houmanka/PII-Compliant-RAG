@@ -9,8 +9,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.orm import relationship
 
 from config import Config
-from storage.contract import DataStore, Complaint, Classification, File
-from storage.registry import register, DataStorageKind
+from providers.storage.contract import DataStore, Complaint, Classification, File
+from providers.storage.registry import register, DataStorageKind
 
 Base = declarative_base()
 

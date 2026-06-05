@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from testcontainers.postgres import PostgresContainer
 
 from config import Config
-from storage.contract import Classification
-from storage.postgres import Base, _Classifications, _Complaints, _Files, _PostgresStore
+from providers.storage.contract import Classification
+from providers.storage.postgres import Base, _Classifications, _Complaints, _Files, _PostgresStore
 
 
 @pytest.fixture(scope="module")

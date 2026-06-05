@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Callable, Dict
 
 from config import Config
-from cloud_storage.contract import CloudStorage
+from providers.cloud_storage.contract import CloudStorage
 
 
 class CloudStorageKind(str, Enum):

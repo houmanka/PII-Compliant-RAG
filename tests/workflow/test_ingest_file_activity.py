@@ -2,8 +2,8 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from cloud_storage.contract import CloudStorage
-from storage.contract import DataStore
+from providers.cloud_storage.contract import CloudStorage
+from providers.storage.contract import DataStore
 from workflow.activities.ingest_file_activity import FileDetails, IngestFileActivity
 
 
