@@ -5,7 +5,7 @@ services:
     command: ["gcloud", "beta", "emulators", "pubsub", "start", "--host-port=0.0.0.0:8085"]
     ports:
       - "8085:8085"
-      -
+
   postgres:
     image: postgres:16
     container_name: complaint_store_postgres
@@ -23,3 +23,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+volumes:
+  pg_data:

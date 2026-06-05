@@ -4,14 +4,12 @@ from concurrent.futures import ThreadPoolExecutor
 from temporalio.client import Client
 from temporalio.envconfig import ClientConfig
 from temporalio.worker import Worker
-
-from cloud_storage import local_cloud
 from cloud_storage.registry import build_cloud_storage, CloudStorageKind
 from config import Config, get_config
 from event_handler.event_handler import ingestion_handler
 from storage.registry import build_data_store, DataStorageKind
 from workflow.activities.ingest_file_activity import IngestFileActivity
-from workflow.ingestion import IngestionWorkflow
+from workflow.complaint_workflow import ComplaintWorkflow
 
 
 async def main():
@@ -33,7 +31,7 @@ async def main():
         client,
         task_queue="INGESTION_QUEUE",
         activities=[ingestion_handler, ingestion_activity.ingest_file_activity],
-        workflows=[IngestionWorkflow],
+        workflows=[ComplaintWorkflow],
         activity_executor=ThreadPoolExecutor(5),
     )
     print("worker running...", end="", flush=True)

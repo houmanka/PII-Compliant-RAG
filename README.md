@@ -104,9 +104,25 @@ so that raw complaint text never leaves memory and is never written anywhere bef
 
 ### Prerequisites
 
+**sample .env file:**
+PUBSUB_EMULATOR_HOST=localhost:8085
+GOOGLE_CLOUD_PROJECT=local
+DATABASE_URL=postgresql://app_user:change_me@localhost:5432/complaint_store
+MCP_PATH=http://127.0.0.1:8090/mcp
+
 - Docker
 - [uv](https://docs.astral.sh/uv/)
-- Temporal dev server (`temporal server start-dev`)
+- Temporal dev server (`temporal server start-dev`) 
+  - for standalone activity you need: `temporal version 1.7.0 (Server 1.31.0, UI 2.49.1)`
+- start your worker (`worker/worker.py`), make sure to source the env vars
+- start your subscriber (`subscriber.py`), make sure to source the env vars
+
+### Set up your DB
+- docker file has the postgres in it
+- 
+
+
+
 
 ### Start the Pub/Sub emulator
 
@@ -134,7 +150,7 @@ export GOOGLE_CLOUD_PROJECT=local
 
 uv run python ./localdev/pubsub_emulator_tools.py publish \
   --topic object-created \
-  --json '{"provider":"local","path":"data/inbox/users.csv","eventType":"ObjectCreated"}'
+  --json '{"provider":"local","path":"data/inbox/support.csv","eventType":"ObjectCreated"}'
 ```
 
 ### Verify the event was published

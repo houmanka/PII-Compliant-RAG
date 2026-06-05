@@ -21,4 +21,4 @@ def build_data_store(kind: DataStorageKind, config: HasDatabaseURL) -> ValueErro
     try:
         return _REGISTRY[kind](config)
     except KeyError:
-        return ValueError(f"Data storage kind {kind} not supported")
+        raise ValueError(f"Data storage kind {kind} not supported")

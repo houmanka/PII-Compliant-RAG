@@ -16,7 +16,7 @@ async def ingestion_handler(arg: FileInput) -> str:
 
     client = activity.client()
     result = await client.execute_workflow(
-        "IngestionWorkflow",
+        "ComplaintWorkflow",
         arg,
         id=f"ingestion-workflow-{random_id}",
         task_queue="INGESTION_QUEUE",

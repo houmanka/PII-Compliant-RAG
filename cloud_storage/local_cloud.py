@@ -11,16 +11,10 @@ class LocalCloudStorage(CloudStorage):
         # Config is accepted for factory consistency, even if LocalCloud doesn't need it yet.
         self._config = config
 
-    def iter_text_lines(self, bucket: str, blob_name: str) -> Iterator[str]:
-        """Yield UTF-8 lines from a local file path.
+    _PROJECT_ROOT = Path(__file__).parents[1]
 
-        For local development, we treat:
-        - `bucket` as a base directory (optional)
-        - `blob_name` as a relative path under that directory (or an absolute/relative path if bucket is empty)
-        """
-
-        base = Path(bucket) if bucket else Path()
-        file_path = (base / blob_name).expanduser()
+    def iter_text_lines(self, path: str) -> Iterator[str]:
+        file_path = self._PROJECT_ROOT / path
 
         if not file_path.exists():
             raise FileNotFoundError(f"File not found at: {file_path}")

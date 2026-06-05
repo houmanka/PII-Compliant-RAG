@@ -1,15 +1,16 @@
+import os
 from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import Column, Integer, Text, String, DateTime, Boolean, ForeignKey
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.orm import relationship
 
 from config import Config
-from storage.contract import DataStore, Complaint, Classification, FileInput, File
+from storage.contract import DataStore, Complaint, Classification, File
+from storage.registry import register, DataStorageKind
 
 Base = declarative_base()
 
@@ -40,7 +41,6 @@ class _Files(Base):
     __tablename__ = 'files'
 
     id = Column(Integer, primary_key=True)
-    file_name = Column(String(64), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), default=get_utc_now)
     archived_at = Column(DateTime(timezone=True), nullable=True)
     path = Column(String(256), nullable=False)
@@ -51,6 +51,7 @@ class _Classifications(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(64), nullable=False, index=True, unique=True)
 
+@register(DataStorageKind.POSTGRES)
 class _PostgresStore(DataStore):
     def __init__(self, config: Config) -> None:
         self.config = config
@@ -110,16 +111,16 @@ class _PostgresStore(DataStore):
                 raise ValueError(f"failed to save classification: {name}")
             return Classification(id=saved.id, name=saved.name)
 
-    def save_file(self, file_input: FileInput) -> File:
-        insert = pg_insert(_Files).values(file_name=file_input.name, path=file_input.path)
+    def save_file(self, path: str) -> File:
+        insert = pg_insert(_Files).values(path=path)
         update_stmt = insert.on_conflict_do_nothing()
         with self.SessionLocal() as session:
             session.execute(update_stmt)
             session.commit()
-            saved = session.query(_Files).filter(_Files.file_name == file_input.name).first()
+            saved = session.query(_Files).filter(_Files.path == path).first()
             if not saved:
-                raise ValueError(f"failed to save file: {file_input.name}")
-            return File(id=saved.id, name=saved.file_name, path=saved.path)
+                raise ValueError(f"failed to save file: {path}")
+            return File(id=saved.id, name=os.path.basename(path), path=saved.path)
 
 
     def archive_file(self, file_id: int) -> None: ...
