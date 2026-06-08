@@ -72,30 +72,66 @@ classifications
 ## Architecture
 
 ```
-Cloud bucket (CSV dropped)
-        ↓  ObjectCreated event
-Google Pub/Sub
-        ↓
-subscriber.py           listens to Pub/Sub
-        ↓
-[Standalone Activity]   ingestion_handler — starts IngestionWorkflow via Temporal client
-        ↓
-[Workflow]              IngestionWorkflow
-        ├─ Activity: ingest_complaints   streams CSV line-by-line; per row:
-        │                                  1. skip if case_id already in Postgres (idempotency)
-        │                                  2. PII scan via MCP tool, redact in memory
-        │                                  3. classify via ML model
-        │                                  4. write redacted complaint + classification to Postgres
-        │                                heartbeats row offset — on retry, resumes from last row
-        │
-        ├─ Activity: vectorise_and_push  reads rows where vectorised = false from Postgres,
-        │                                embeds redacted text, pushes to Pinecone,
-        │                                marks vectorised = true
-        │
-        └─ Activity: archive_file        moves source file to archive location
+Cloud Bucket
+(CSV dropped)
+     │
+     │  ObjectCreated event
+     ▼
+┌──────────────┐
+│ Google       │
+│ Pub/Sub      │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ subscriber   │  Pulls Pub/Sub messages
+│ .py          │
+└──────┬───────┘
+       │  FileInput { provider, path, event_type }
+       ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  Temporal Worker                                                     │
+│                                                                      │
+│  ┌─────────────────────┐                                            │
+│  │ ingestion_handler   │  Standalone Activity                       │
+│  │ (Activity)          │  starts ComplaintWorkflow via client       │
+│  └──────────┬──────────┘                                            │
+│             │                                                        │
+│             ▼                                                        │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  ComplaintWorkflow                                           │   │
+│  │                                                              │   │
+│  │  ┌────────────────────────────────────────────────────────┐  │   │
+│  │  │  ingest_file_activity                                  │  │   │
+│  │  │                                                        │  │   │
+│  │  │  for each row in CSV (streamed, not loaded in memory): │  │   │
+│  │  │    1. skip if case_id already in Postgres (idempotent) │  │   │
+│  │  │    2. PII scan + redact  ◄── MCP tool (HTTP)          │  │   │
+│  │  │    3. classify           ◄── ML model (joblib)        │  │   │
+│  │  │    4. persist to Postgres                              │  │   │
+│  │  │                                                        │  │   │
+│  │  │  returns: file_id                                      │  │   │
+│  │  └────────────────────────────────────────────────────────┘  │   │
+│  │                                                              │   │
+│  │  ┌────────────────────────────────────────────────────────┐  │   │
+│  │  │  embedding_activity                    [IN PROGRESS]   │  │   │
+│  │  │                                                        │  │   │
+│  │  │  1. fetch complaints where embedded = false            │  │   │
+│  │  │  2. embed redacted text  ◄── AllMiniLM                │  │   │
+│  │  │  3. push vectors         ──► Pinecone  [IN PROGRESS]  │  │   │
+│  │  │  4. mark embedded = true                               │  │   │
+│  │  └────────────────────────────────────────────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+       │                    │                    │
+       ▼                    ▼                    ▼
+┌──────────┐         ┌──────────┐         ┌──────────┐
+│ Postgres │         │  Redis   │         │ Pinecone │
+│          │         │  Cache   │         │ (vector) │
+└──────────┘         └──────────┘         └──────────┘
 ```
 
-`ingest_complaints` handles streaming, PII, classification, and persistence in a single activity
+`ingest_file_activity` handles streaming, PII, classification, and persistence in a single activity
 so that raw complaint text never leaves memory and is never written anywhere before redaction.
 
 ---
@@ -119,9 +155,6 @@ MCP_PATH=http://127.0.0.1:8090/mcp
 
 ### Set up your DB
 - docker file has the postgres in it
-- 
-
-
 
 
 ### Start the Pub/Sub emulator
