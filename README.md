@@ -171,10 +171,10 @@ MCP_PATH=http://127.0.0.1:8090/mcp
 - docker file has the postgres in it
 
 
-### Start the Pub/Sub emulator
+### Start the Pub/Sub, postgres, redis
 
 ```bash
-docker compose up -d pubsub
+docker compose up -d
 ```
 
 ### One-time Pub/Sub setup

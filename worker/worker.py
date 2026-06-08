@@ -30,7 +30,7 @@ async def main():
 
     # Activity class
     ingestion_activity_obj = IngestFileActivity(cloud_storage=cloud_storage_provider, data_store=data_storage_provider, mcp_url=get_config().mcp_path)
-    embedding_activity_obj = EmbeddingActivity(data_store=data_storage_provider, embedding_provider=embedding_provider)
+    embedding_activity_obj = EmbeddingActivity(data_store=data_storage_provider, embedding_provider=embedding_provider, cache_provider=cache_provider)
 
 
     client = await Client.connect(**connect_config)

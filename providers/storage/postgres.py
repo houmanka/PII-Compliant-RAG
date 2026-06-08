@@ -97,7 +97,21 @@ class _PostgresStore(DataStore):
 
     def fetch_by_case_id(self, case_id: str) -> Optional[Complaint]: ...
     def fetch_by_classification(self, classification_id: int) -> Complaint: ...
-    def fetch_unembedded(self, file_id: int) -> list[Complaint]: ...
+    def fetch_unembedded(self, file_id: int) -> list[Complaint]:
+        c = []
+        with self.SessionLocal() as session:
+            _complaints = session.query(_Complaints).filter(_Complaints.file_id == file_id).filter(_Complaints.embedded == False).all()
+            for complaint in _complaints:
+                c.append(Complaint(
+                    id=complaint.id,
+                    case_id=complaint.case_id,
+                    text_redacted=complaint.text_redacted,
+                    file_id=complaint.file_id,
+                    embedded=complaint.embedded,
+                    classification= Classification(id=complaint.classification_rel.id, name=complaint.classification_rel.name),
+                ))
+            return c
+
     def mark_embedded(self, complaint_id: int) -> None: ...
 
     def save_classification(self, name: str) -> Classification:

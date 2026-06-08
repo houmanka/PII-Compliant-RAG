@@ -1,3 +1,4 @@
+import pickle
 from typing import Any
 from config import Config
 from providers.cache_provider.contract import CacheProvider
@@ -10,8 +11,9 @@ class RedisStorage(CacheProvider):
     def __init__(self, redis_connection: Redis):
         self.redis_connection = redis_connection
 
-    def create(self, key: str, value: Any, timeout: int) -> None:
-        self.redis_connection.set(key, value, ex=timeout, nx=True)
+    def create(self, key: str, value: Any) -> None:
+        serialized_bytes = pickle.dumps(value)
+        self.redis_connection.set(key, serialized_bytes, nx=True)
 
     def exists(self, key: str) -> bool:
         return bool(self.redis_connection.exists(key))
@@ -25,9 +27,10 @@ class RedisStorage(CacheProvider):
 
     def fetch(self, key: str) -> Any:
         cached_data_bytes = self.redis_connection.get(key)
+        pickled_data = pickle.loads(cached_data_bytes)
         if not cached_data_bytes:
             return None
-        return cached_data_bytes.decode()
+        return pickled_data
 
 
 @register(CacheProviderKind.REDIS)
