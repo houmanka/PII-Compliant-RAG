@@ -14,6 +14,8 @@ class Config(BaseSettings):
     database_url: SecretStr
     mcp_path: str
     embedding_engine: str
+    redis_host: str
+    redis_port: int
 
 _config: Optional[Config] = None
 
