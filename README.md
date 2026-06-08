@@ -118,8 +118,22 @@ Cloud Bucket
 │  │  │                                                        │  │   │
 │  │  │  1. fetch complaints where embedded = false            │  │   │
 │  │  │  2. embed redacted text  ◄── AllMiniLM                │  │   │
-│  │  │  3. push vectors         ──► Pinecone  [IN PROGRESS]  │  │   │
+│  │  │  3. store vectors in Redis cache                       │  │   │
 │  │  │  4. mark embedded = true                               │  │   │
+│  │  └────────────────────────────────────────────────────────┘  │   │
+│  │                                                              │   │
+│  │  ┌────────────────────────────────────────────────────────┐  │   │
+│  │  │  vector_storage_activity               [IN PROGRESS]   │  │   │
+│  │  │                                                        │  │   │
+│  │  │  1. read vectors from Redis cache                      │  │   │
+│  │  │  2. push vectors  ──► Pinecone (cloud vector DB)      │  │   │
+│  │  └────────────────────────────────────────────────────────┘  │   │
+│  │                                                              │   │
+│  │  ┌────────────────────────────────────────────────────────┐  │   │
+│  │  │  eventual_consistency_activity         [IN PROGRESS]   │  │   │
+│  │  │                                                        │  │   │
+│  │  │  1. run sample similarity search against Pinecone      │  │   │
+│  │  │  2. verify vectors were stored correctly               │  │   │
 │  │  └────────────────────────────────────────────────────────┘  │   │
 │  └──────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
