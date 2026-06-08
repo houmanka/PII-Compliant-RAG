@@ -10,8 +10,8 @@ class RedisStorage(CacheProvider):
     def __init__(self, redis_connection: Redis):
         self.redis_connection = redis_connection
 
-    def create(self, key: str, value: Any, timeout: int) -> None:
-        self.redis_connection.set(key, value, ex=timeout, nx=True)
+    def create(self, key: str, value: Any) -> None:
+        self.redis_connection.set(key, value, nx=True)
 
     def exists(self, key: str) -> bool:
         return bool(self.redis_connection.exists(key))
