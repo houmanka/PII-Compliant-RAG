@@ -4,6 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 from temporalio.client import Client
 from temporalio.envconfig import ClientConfig
 from temporalio.worker import Worker
+
+from providers.cache_provider.registry import build_cache_provider, CacheProviderKind
 from providers.cloud_storage.registry import build_cloud_storage, CloudStorageKind
 from config import Config, get_config
 from event_handler.event_handler import ingestion_handler
@@ -24,6 +26,7 @@ async def main():
     cloud_storage_provider = build_cloud_storage(kind=CloudStorageKind.LocalCloud ,config=conf)
     data_storage_provider = build_data_store(kind=DataStorageKind.POSTGRES ,config=conf)
     embedding_provider = build_embedding_provider(kind=EmbeddingProviderKind.ALL_MINILM, config=conf)
+    cache_provider = build_cache_provider(kind=CacheProviderKind.REDIS, config=conf)
 
     # Activity class
     ingestion_activity_obj = IngestFileActivity(cloud_storage=cloud_storage_provider, data_store=data_storage_provider, mcp_url=get_config().mcp_path)
