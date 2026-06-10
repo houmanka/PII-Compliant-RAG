@@ -31,7 +31,10 @@ class EmbeddingActivity:
         vectored_ready = [complaint.text_redacted for complaint in compliant_list]
         embedded_text = self.embedding_provider.embed_texts(vectored_ready)
 
-        self.cache_provider.create(dragonfly_key, embedded_text)
+        # note: we need to add the case id to be zipped with each vector
+        cache_with_case = [(complaint.case_id, vector) for complaint, vector in zip(compliant_list, embedded_text)]
+
+        self.cache_provider.create(dragonfly_key, cache_with_case)
         return EmbeddingActivityResult(file_id=file_id, cache_id=unique_cache_key)
 
     async def get_a_unique_cache_key(self, file_id: int) -> str:
