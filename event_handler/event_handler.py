@@ -5,6 +5,13 @@ from temporalio import activity
 
 @dataclass
 class FileInput:
+    """FileInput
+
+    Attributes:
+        provider: cloud storage provider name (e.g. "local", "gcs")
+        path: path to the file in the cloud bucket
+        event_type: Pub/Sub event type that triggered this ingestion
+    """
     provider: str
     path: str
     event_type: str
