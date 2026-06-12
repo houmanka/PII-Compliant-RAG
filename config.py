@@ -17,6 +17,7 @@ class Config(BaseSettings):
     redis_host: str
     redis_port: int
     pinecone_key: SecretStr
+    task_queue: str
 
 _config: Optional[Config] = None
 

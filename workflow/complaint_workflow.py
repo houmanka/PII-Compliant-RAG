@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 from temporalio import workflow
 
+from workflow.activities.vectore_storage_activity import VectorStorageActivityResult, VectorStorageActivity
+
 with workflow.unsafe.imports_passed_through():
     from workflow.activities.ingest_file_activity import IngestFileActivity, FileDetails
     from workflow.activities.embedding_activity import EmbeddingActivity, EmbeddingActivityResult
@@ -36,5 +38,13 @@ class ComplaintWorkflow:
             file_id,
             start_to_close_timeout=timedelta(seconds=120),
         )
+
+        vector_storage: VectorStorageActivityResult = await workflow.execute_activity(
+            VectorStorageActivity.store_vector,
+            embedding_result.cache_id,
+            start_to_close_timeout=timedelta(seconds=120),
+        )
+
+
 
         return embedding_result

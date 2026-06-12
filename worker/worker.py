@@ -11,8 +11,10 @@ from config import Config, get_config
 from event_handler.event_handler import ingestion_handler
 from providers.embeddings.registry import build_embedding_provider, EmbeddingProviderKind
 from providers.storage.registry import build_data_store, DataStorageKind
+from providers.vector_database_provider.registry import build_vector_db_provider, VectorDatabaseProviderKind
 from workflow.activities.embedding_activity import EmbeddingActivity
 from workflow.activities.ingest_file_activity import IngestFileActivity
+from workflow.activities.vectore_storage_activity import VectorStorageActivity
 from workflow.complaint_workflow import ComplaintWorkflow
 
 
@@ -27,19 +29,23 @@ async def main():
     data_storage_provider = build_data_store(kind=DataStorageKind.POSTGRES ,config=conf)
     embedding_provider = build_embedding_provider(kind=EmbeddingProviderKind.ALL_MINILM, config=conf)
     cache_provider = build_cache_provider(kind=CacheProviderKind.REDIS, config=conf)
+    vector_database_provider = build_vector_db_provider(kind=VectorDatabaseProviderKind.PINECONE, config=conf)
 
     # Activity class
     ingestion_activity_obj = IngestFileActivity(cloud_storage=cloud_storage_provider, data_store=data_storage_provider, mcp_url=get_config().mcp_path)
     embedding_activity_obj = EmbeddingActivity(data_store=data_storage_provider, embedding_provider=embedding_provider, cache_provider=cache_provider)
+    vector_db_activity_obj = VectorStorageActivity(cache_provider=cache_provider, vector_db_provider=vector_database_provider)
 
 
     client = await Client.connect(**connect_config)
     worker = Worker(
         client,
-        task_queue="INGESTION_QUEUE",
+        task_queue=conf.task_queue,
         activities=[ingestion_handler,
                     ingestion_activity_obj.ingest_file_activity,
-                    embedding_activity_obj.embedding_activity],
+                    embedding_activity_obj.embedding_activity,
+                    vector_db_activity_obj.store_vector,
+                    ],
         workflows=[ComplaintWorkflow],
         activity_executor=ThreadPoolExecutor(5),
     )

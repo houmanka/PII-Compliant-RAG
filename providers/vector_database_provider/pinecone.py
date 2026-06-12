@@ -42,23 +42,17 @@ class PineconeStorage(VectorDatabaseProvider):
             self,
             vectors: list[VectorRecord],
             namespace: str = "default",
-    ) -> None:
+    ) -> int:
 
-        for vector_record in vectors:
-            if len(record.vector)
-
-
-        if not (len(ids) == len(vectors) == len(metadata)):
-            raise ValueError(
-                "ids, vectors, and metadata must have the same length. "
-                f"Got ids={len(ids)}, vectors={len(vectors)}, metadata={len(metadata)}"
+        payload = []
+        for record in vectors:
+            payload.append(
+                {"id": record.case_id, "values": record.vector, "metadata": record.metadata}
             )
-        payload = [
-            {"id": vec_id, "values": values, "metadata": meta}
-            for vec_id, values, meta in zip(ids, vectors, metadata)
-        ]
-        self.index.upsert(vectors=payload, namespace=namespace)
 
+        response = self.index.upsert(vectors=payload, namespace=namespace)
+
+        return response.upserted_count
 
 
     def query(self, vector: list[float],
@@ -81,5 +75,6 @@ class PineconeStorage(VectorDatabaseProvider):
 
 
 @register(VectorDatabaseProviderKind.PINECONE)
-def create_vector_database(config: Config):
-    return Pinecone(api_key=config.pinecone_key.get_secret_value())
+def create_vector_database(config: Config) -> PineconeStorage:
+    pinecone_storage = PineconeStorage(Pinecone(api_key=config.pinecone_key.get_secret_value()))
+    return pinecone_storage
