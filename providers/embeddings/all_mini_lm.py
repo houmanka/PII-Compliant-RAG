@@ -7,7 +7,7 @@ from providers.embeddings.contracts import EmbeddingProvider
 from providers.embeddings.registry import EmbeddingProviderKind, register
 
 
-class _AllMiniLM(EmbeddingProvider):
+class AllMiniLMEmbedding(EmbeddingProvider):
     def __init__(self, model: SentenceTransformer):
         self.model = model
 
@@ -16,6 +16,6 @@ class _AllMiniLM(EmbeddingProvider):
         return embeddings
 
 @register(EmbeddingProviderKind.ALL_MINILM)
-def create_embedding_provider(config: Config):
+def create_embedding_provider(config: Config) -> AllMiniLMEmbedding:
     model = SentenceTransformer(config.embedding_engine)
-    return _AllMiniLM(model=model)
+    return AllMiniLMEmbedding(model=model)

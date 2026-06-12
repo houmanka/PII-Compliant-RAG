@@ -15,11 +15,23 @@ from providers.storage.contract import DataStore, Complaint, Classification
 
 @dataclass
 class FileDetails:
+    """FileDetails
+
+    Attributes:
+        path: path to the CSV file in the cloud bucket
+        provider: cloud storage provider name (e.g. "local", "gcs")
+    """
     path: str
     provider: str # need to change it to be the cloud client
 
 @dataclass
 class _Classification:
+    """_Classification
+
+    Attributes:
+        id: primary key of the classification record
+        name: label assigned by the ML model (e.g. "billing", "fraud", "service")
+    """
     id: int
     name: str
 
