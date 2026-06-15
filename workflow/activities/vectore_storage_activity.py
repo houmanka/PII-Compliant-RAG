@@ -11,10 +11,8 @@ class VectorStorageActivityResult:
 
     Attributes:
         number_of_vectors_stored: number of vectors stored
-        success: if successful
     """
     number_of_vectors_stored: int
-    success: bool
 
 
 class VectorStorageActivity:
@@ -27,14 +25,12 @@ class VectorStorageActivity:
     async def store_vector(self, unique_cache_id: str) -> VectorStorageActivityResult:
         vector_payloads: list[VectorRecord] = self.get_vectors_from_cache(unique_cache_id)
         count = self.vector_db_provider.upsert_vectors(vector_payloads)
-        if count == len(vector_payloads):
-            return VectorStorageActivityResult(
-                number_of_vectors_stored=count,
-                success=True,
+        if count != len(vector_payloads):
+            raise RuntimeError(
+                f"Pinecone upsert mismatch: expected {len(vector_payloads)}, got {count}"
             )
         return VectorStorageActivityResult(
             number_of_vectors_stored=count,
-            success=False,
         )
 
 

@@ -1,24 +1,9 @@
+import logging
 from dataclasses import dataclass
 from datetime import timedelta
 from temporalio import workflow
-
-"""
-activity 1 (DONE)
-1. based on the reference of the cache, return the vectors
-2. set them up based on what Pinecone needs
-3. Push your vectors to the pinecone storage
-4. return the number_of_vectors_stored: int, success: bool
-
-activity 2 (TODO)
-1. use the file_id and update the database to set the records to be embedded
-
-activity 3 (TODO)
-1. use the cache reference to delete the redis cache
-
-activity 4 (TODO)
-1. create a query and call the pinecone for the similarity search
-
-"""
+from libs.retry_policy_funcs import retry
+from workflow.activities.cache_activity import CacheActivity
 
 from workflow.activities.vectore_storage_activity import VectorStorageActivityResult, VectorStorageActivity
 
@@ -26,6 +11,7 @@ with workflow.unsafe.imports_passed_through():
     from workflow.activities.ingest_file_activity import IngestFileActivity, FileDetails
     from workflow.activities.embedding_activity import EmbeddingActivity, EmbeddingActivityResult
 
+logging.basicConfig(level=logging.INFO)
 
 @dataclass
 class FileInput:
@@ -61,8 +47,26 @@ class ComplaintWorkflow:
             VectorStorageActivity.store_vector,
             embedding_result.cache_id,
             start_to_close_timeout=timedelta(seconds=120),
+            retry_policy= retry()
+        )
+        logging.info(f"Number of vectors: {vector_storage.number_of_vectors_stored}")
+
+        await workflow.execute_activity(
+            IngestFileActivity.update_embedded_records,
+            file_id,
+            start_to_close_timeout=timedelta(seconds=120),
         )
 
+        await workflow.execute_activity(
+            CacheActivity.delete_cache,
+            embedding_result.cache_id,
+            start_to_close_timeout=timedelta(seconds=120),
+        )
+
+        # TODO: create a query and call the pinecone for the similarity search
 
 
-        return embedding_result
+
+        logging.info("completed")
+        return True
+

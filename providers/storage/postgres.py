@@ -2,10 +2,10 @@ import os
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import Column, Integer, Text, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, Text, String, DateTime, Boolean, ForeignKey, update
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column
 from sqlalchemy.orm import relationship
 
 from config import Config
@@ -21,8 +21,8 @@ def get_utc_now():
 class _Complaints(Base):
     __tablename__ = 'complaints'
 
-    id = Column(Integer, primary_key=True)
-    case_id = Column(String(64), nullable=False, index=True, unique=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
 
     text_redacted = Column(Text, nullable=False)
     embedded = Column(Boolean, default=False, nullable=False)
@@ -112,7 +112,16 @@ class _PostgresStore(DataStore):
                 ))
             return c
 
-    def mark_embedded(self, complaint_id: int) -> None: ...
+    def mark_embedded(self, file_id: int) -> None:
+        with self.SessionLocal() as session:
+            stmt = (
+                update(_Complaints)
+                .where(_Complaints.file_id == file_id)
+                .values(embedded=True, embedded_at=datetime.now())
+            )
+            session.execute(stmt)
+            session.commit()
+
 
     def save_classification(self, name: str) -> Classification:
         insert = pg_insert(_Classifications).values(name=name)
