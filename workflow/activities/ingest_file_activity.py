@@ -99,7 +99,6 @@ class IngestFileActivity:
 
     @activity.defn
     async def update_embedded_records(self, file_id: int) -> None:
-        # TODO create mark_embedded, it needs to accept file id and updates everything attached to it.
         self.data_store.mark_embedded(file_id)
 
 
