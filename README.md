@@ -176,6 +176,18 @@ MCP_PATH=http://127.0.0.1:8090/mcp
 ```bash
 docker compose up -d
 ```
+Once Postgres is up, run this to apply the migrations:
+
+```bash
+uv run alembic upgrade head
+```
+
+Trigger the test:
+```commandline
+uv run python ./localdev/trigger_test.py
+```
+
+Or you can do it manually
 
 ### One-time Pub/Sub setup
 

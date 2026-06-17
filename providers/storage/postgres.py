@@ -22,7 +22,7 @@ class _Complaints(Base):
     __tablename__ = 'complaints'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
+    case_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
 
     text_redacted = Column(Text, nullable=False)
     embedded = Column(Boolean, default=False, nullable=False)

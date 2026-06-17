@@ -41,7 +41,7 @@ class EmbeddingActivity:
         cache_with_case = [(complaint.case_id, vector, complaint.classification.name) for complaint, vector in zip(compliant_list, embedded_text)]
 
         self.cache_provider.create(dragonfly_key, cache_with_case)
-        return EmbeddingActivityResult(file_id=file_id, cache_id=unique_cache_key)
+        return EmbeddingActivityResult(file_id=file_id, cache_id=dragonfly_key)
 
     async def get_a_unique_cache_key(self, file_id: int) -> str:
         session_id = str(uuid.uuid4())
