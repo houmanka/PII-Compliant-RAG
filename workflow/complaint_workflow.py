@@ -3,13 +3,11 @@ from dataclasses import dataclass
 from datetime import timedelta
 from temporalio import workflow
 from libs.retry_policy_funcs import retry
-from workflow.activities.cache_activity import CacheActivity
-
-from workflow.activities.vectore_storage_activity import VectorStorageActivityResult, VectorStorageActivity
-
 with workflow.unsafe.imports_passed_through():
     from workflow.activities.ingest_file_activity import IngestFileActivity, FileDetails
     from workflow.activities.embedding_activity import EmbeddingActivity, EmbeddingActivityResult
+    from workflow.activities.vector_storage_activity import VectorStorageActivityResult, VectorStorageActivity
+    from workflow.activities.cache_activity import CacheActivity
 
 logging.basicConfig(level=logging.INFO)
 
@@ -58,14 +56,16 @@ class ComplaintWorkflow:
         )
 
         await workflow.execute_activity(
-            CacheActivity.delete_cache,
+            VectorStorageActivity.query_vector,
             embedding_result.cache_id,
             start_to_close_timeout=timedelta(seconds=120),
         )
 
-        # TODO: create a query and call the pinecone for the similarity search
-
-
+        await workflow.execute_activity(
+            CacheActivity.delete_cache,
+            embedding_result.cache_id,
+            start_to_close_timeout=timedelta(seconds=120),
+        )
 
         logging.info("completed")
         return True

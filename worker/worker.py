@@ -15,7 +15,7 @@ from providers.vector_database_provider.registry import build_vector_db_provider
 from workflow.activities.cache_activity import CacheActivity
 from workflow.activities.embedding_activity import EmbeddingActivity
 from workflow.activities.ingest_file_activity import IngestFileActivity
-from workflow.activities.vectore_storage_activity import VectorStorageActivity
+from workflow.activities.vector_storage_activity import VectorStorageActivity
 from workflow.complaint_workflow import ComplaintWorkflow
 
 
@@ -45,8 +45,10 @@ async def main():
         task_queue=conf.task_queue,
         activities=[ingestion_handler,
                     ingestion_activity_obj.ingest_file_activity,
+                    ingestion_activity_obj.update_embedded_records,
                     embedding_activity_obj.embedding_activity,
                     vector_db_activity_obj.store_vector,
+                    vector_db_activity_obj.query_vector,
                     cache_activity_obj.delete_cache,
                     ],
         workflows=[ComplaintWorkflow],

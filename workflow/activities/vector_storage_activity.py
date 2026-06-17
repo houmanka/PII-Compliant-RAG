@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from typing import Any
 
 from temporalio import activity
 
 from providers.cache_provider.contract import CacheProvider
-from providers.vector_database_provider.contracts import VectorDatabaseProvider, VectorRecord
+from providers.vector_database_provider.contracts import VectorDatabaseProvider, VectorRecord, SimilarityResponse
+
 
 @dataclass
 class VectorStorageActivityResult:
@@ -33,6 +35,16 @@ class VectorStorageActivity:
             number_of_vectors_stored=count,
         )
 
+    @activity.defn
+    async def query_vector(self, unique_cache_id: str) -> list[SimilarityResponse]:
+        vector_payloads: list[VectorRecord] = self.get_vectors_from_cache(unique_cache_id)
+        response = self.vector_db_provider.query(
+            vector=vector_payloads[0].vector,
+            top_k=3,
+             namespace="default",
+            filters=None,
+        )
+        return response
 
     def get_vectors_from_cache(self, unique_cache_id: str) -> list[VectorRecord]:
         # this is list of tuples from (case_id, vector, classification_name) saved in our cache

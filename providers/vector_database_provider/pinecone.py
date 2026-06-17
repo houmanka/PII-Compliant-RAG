@@ -7,7 +7,7 @@ from config import Config
 from providers.vector_database_provider.contracts import VectorDatabaseProvider, VectorRecord, SimilarityResponse
 from providers.vector_database_provider.registry import VectorDatabaseProviderKind, register
 
-INDEX_NAME: Final = "pii_compliant_pipeline"
+INDEX_NAME: Final = "pii-compliant-pipeline"
 DIMENSION: Final = 384
 METRIC: Final = "cosine"
 
@@ -59,7 +59,23 @@ class PineconeStorage(VectorDatabaseProvider):
             namespace: str,
             top_k: int = 3,
             filters: dict | None = None) -> list[SimilarityResponse]:
-        ...
+        response = self.index.query(
+            vector=vector,
+            top_k=top_k,
+            namespace=namespace,
+            include_values=False,
+            include_metadata=True,
+            filter=filters,
+        )
+        results = []
+        for match in response.matches:
+            results.append(SimilarityResponse(
+                case_id=match.id,
+                score=float(match.score),
+                metadata=match.metadata or {},
+            ))
+
+        return results
 
     def ensure_index_ready(self, max_wait_seconds=300):
         start_time = time.time()
