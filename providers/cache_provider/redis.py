@@ -27,10 +27,9 @@ class RedisStorage(CacheProvider):
 
     def fetch(self, key: str) -> Any:
         cached_data_bytes = self.redis_connection.get(key)
-        pickled_data = pickle.loads(cached_data_bytes)
         if not cached_data_bytes:
             return None
-        return pickled_data
+        return pickle.loads(cached_data_bytes)
 
 
 @register(CacheProviderKind.REDIS)
