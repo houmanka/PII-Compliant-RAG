@@ -70,24 +70,67 @@ C-10001,U-9001,2026-05-19T09:12:00Z,email,jane.doe@example.com,"Chargeback on un
 ## Diagram (High Level)
 
 ```mermaid
+High-level pipeline:
 flowchart TD
-  A["Pub/Sub event (file path)"] --> B["Start Workflow (CSV path)"]
-  B --> C["Activity: download_file (stream CSV)"]
-  C --> D["Parse row → Case object"]
+    A[CSV dropped into Cloud Bucket] --> B[Pub/Sub Event Published]
+    B --> C[subscriber.py]
+    C --> D[ingestion_handler\nStandalone Activity]
+    D --> E[ComplaintWorkflow]
+    E --> F[Activities Chain]
+```
 
-  D --> E["Activity: PII scan (call MCP tool `pii_classify`)"]
-  E --> F["PII findings (status + entities)"]
+## Diagram (Detailed)
 
-  D --> G["Activity: classify / risk score (rules + models)"]
-  G --> H["Issue type + priority + recommended action"]
+```mermaid
+sequenceDiagram
+    participant W as ComplaintWorkflow
+    participant IA as IngestFileActivity
+    participant MCP as MCP / Presidio
+    participant ML as scikit-learn
+    participant PG as Postgres
+    participant EA as EmbeddingActivity
+    participant EM as AllMiniLM
+    participant RC as Redis
+    participant VS as VectorStorageActivity
+    participant PC as Pinecone
+    participant CA as CacheActivity
 
-  H --> I["Activity: RAG retrieve (policies + playbooks)"]
-  I --> J["Draft grounded recommendation"]
+    W->>IA: ingest_file_activity(FileDetails)
+    IA->>IA: stream CSV from bucket
+    loop each row
+        IA->>MCP: pii_classify(text)
+        MCP-->>IA: redacted_text
+        IA->>ML: predict(redacted_text)
+        ML-->>IA: classification
+        IA->>PG: save_complaint(redacted_text, classification)
+    end
+    IA-->>W: file_id
 
-  J --> L["Persist results (DB) + notify (optional)"]
+    W->>EA: embedding_activity(file_id)
+    EA->>PG: fetch_unembedded(file_id)
+    PG-->>EA: complaints[]
+    EA->>EM: embed_texts(redacted_texts)
+    EM-->>EA: vectors[]
+    EA->>RC: create(cache_key, [(case_id, vector, classification)])
+    EA-->>W: EmbeddingActivityResult(file_id, cache_id)
 
-  L --> M{"Needs human approval?"}
-  M -- "Yes" --> N["Wait for signal: approve/reject/override"]
-  N --> O["Continue processing"]
-  M -- "No" --> O["Continue processing"]
+    W->>VS: store_vector(cache_id)
+    VS->>RC: fetch(cache_id)
+    RC-->>VS: [(case_id, vector, classification)]
+    VS->>PC: upsert_vectors(vectors)
+    PC-->>VS: upserted_count
+    VS-->>W: VectorStorageActivityResult
+
+    W->>IA: update_embedded_records(file_id)
+    IA->>PG: mark_embedded(file_id)
+
+    W->>VS: query_vector(cache_id)
+    VS->>RC: fetch(cache_id)
+    RC-->>VS: vectors
+    VS->>PC: query(vector, top_k=3)
+    PC-->>VS: SimilarityResponse[]
+    VS-->>W: SimilarityResponse[]
+
+    W->>CA: delete_cache(cache_id)
+    CA->>RC: delete(cache_id)
 ```
