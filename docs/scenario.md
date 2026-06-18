@@ -70,7 +70,6 @@ C-10001,U-9001,2026-05-19T09:12:00Z,email,jane.doe@example.com,"Chargeback on un
 ## Diagram (High Level)
 
 ```mermaid
-High-level pipeline:
 flowchart TD
     A[CSV dropped into Cloud Bucket] --> B[Pub/Sub Event Published]
     B --> C[subscriber.py]
