@@ -59,8 +59,15 @@ class IngestFileActivity:
         itr = self.cloud_storage.iter_text_lines(path=arg.path)
         next(itr) # skip the header
 
+        # Resume from the last successfully processed row on retry
+        details = activity.info().heartbeat_details
+        start_row = details[0] + 1 if details else 0
+
         # doc_id, category
-        for line in itr:
+        for row_index, line in enumerate(itr):
+            if row_index < start_row:
+                continue
+
             activity.logger.info(f"Ingesting line {line}")
             row = next(csv.reader([line]))
             case_id, text = row[0], row[1]
@@ -77,7 +84,6 @@ class IngestFileActivity:
             predictions = pipeline.predict([data['redacted_text']])
             classification = await self.save_classification(name=predictions[0])
 
-
             # write into the Database
             self.data_store.save_complaint(Complaint(
                 case_id=case_id,
@@ -87,7 +93,9 @@ class IngestFileActivity:
                 file_id=file_details.id
             ))
 
-        return  file_details.id
+            activity.heartbeat(row_index)
+
+        return file_details.id
 
 
     async def save_classification(self, name: str) -> _Classification:

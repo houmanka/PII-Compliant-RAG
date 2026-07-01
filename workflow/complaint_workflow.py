@@ -33,6 +33,7 @@ class ComplaintWorkflow:
             # TODO: this is the wrong provider
             FileDetails(path=file_input.path, provider=file_input.provider),
             start_to_close_timeout=timedelta(seconds=120),
+            heartbeat_timeout=timedelta(seconds=20),
         )
 
         embedding_result: EmbeddingActivityResult = await workflow.execute_activity(
@@ -67,6 +68,6 @@ class ComplaintWorkflow:
             start_to_close_timeout=timedelta(seconds=120),
         )
 
-        logging.info("completed")
+        workflow.logger.info("completed")
         return True
 
