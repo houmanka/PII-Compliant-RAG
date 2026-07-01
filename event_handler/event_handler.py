@@ -1,4 +1,3 @@
-import uuid
 from dataclasses import dataclass
 
 from temporalio import activity
@@ -18,17 +17,12 @@ class FileInput:
 
 @activity.defn
 async def ingestion_handler(arg: FileInput) -> str:
-    # generate random id
-    random_id = str(uuid.uuid4())
-
     client = activity.client()
-    result = await client.execute_workflow(
+    handle = await client.start_workflow(
         "ComplaintWorkflow",
         arg,
-        id=f"ingestion-workflow-{random_id}",
+        id=f"complaint-workflow-{arg.path}",
         task_queue="INGESTION_QUEUE",
     )
-    print(f"Result: {result}")
 
-
-    return f"{arg.provider}:{arg.path}:{arg.event_type}"
+    return handle.id

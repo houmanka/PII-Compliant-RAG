@@ -39,7 +39,7 @@ async def _handle_message(
                     event_type=payload["eventType"],
                 )
             ],
-            id="ingestion_handler_stand_alone_activity",
+            id=f"ingest:{payload['path']}",
             task_queue="INGESTION_QUEUE",
             start_to_close_timeout=timedelta(seconds=100),
         )
