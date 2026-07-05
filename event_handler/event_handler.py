@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from temporalio import activity
+from temporalio.client import WorkflowIDConflictPolicy, WorkflowIDReusePolicy
 
 @dataclass
 class FileInput:
@@ -23,6 +24,8 @@ async def ingestion_handler(arg: FileInput) -> str:
         arg,
         id=f"complaint-workflow-{arg.path}",
         task_queue="INGESTION_QUEUE",
+        id_conflict_policy=WorkflowIDConflictPolicy.USE_EXISTING,
+        id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE,
     )
 
     return handle.id

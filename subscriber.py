@@ -7,7 +7,7 @@ from typing import Any
 from google.cloud import pubsub_v1
 from datetime import timedelta
 
-from temporalio.client import Client
+from temporalio.client import ActivityIDConflictPolicy, Client
 from temporalio.envconfig import ClientConfig
 
 from event_handler.event_handler import FileInput, ingestion_handler
@@ -42,6 +42,7 @@ async def _handle_message(
             id=f"ingest:{payload['path']}",
             task_queue="INGESTION_QUEUE",
             start_to_close_timeout=timedelta(seconds=100),
+            id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING,
         )
 
         message.ack()
